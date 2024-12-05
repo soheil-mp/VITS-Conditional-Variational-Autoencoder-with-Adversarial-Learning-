@@ -1,0 +1,219 @@
+train:
+  seed: 1234
+  epochs: 10000
+  learning_rate: 0.0002
+  betas: [0.8, 0.99]
+  eps: 1.0e-9
+  batch_size: 16
+  num_workers: 8
+  checkpoint_interval: 5000
+  log_interval: 100
+  log_dir: "logs"
+  checkpoint_dir: "checkpoints"
+  checkpoint_path: ""
+  lr_decay: 0.999
+  lambda_mel: 45.0
+  grad_clip_thresh: 5.0
+  use_amp: true
+  use_gradient_checkpointing: true
+  prefetch_factor: 2
+  persistent_workers: true
+  pin_memory: true
+  validation_interval: 1000
+  num_validation_samples: 4
+  save_best_only: true
+  early_stopping_patience: 10
+  weight_decay: 0.01
+  warmup_steps: 1000
+  max_lr: 0.0004
+  min_lr: 0.00001
+  scheduler: "onecycle"
+  distributed:
+    enabled: true
+    backend: "nccl"
+    world_size: -1
+    rank: -1
+    dist_url: "tcp://localhost:54321"
+    dist_backend: "nccl"
+    multiprocessing_distributed: true
+    benchmark: true
+    deterministic: false
+    find_unused_parameters: false
+  optimization:
+    gradient_accumulation_steps: 1
+    max_grad_norm: 5.0
+    ema:
+      enabled: true
+      decay: 0.9999
+      device: ""
+    amp_opt_level: "O1"
+    loss_scaling:
+      enabled: true
+      init_scale: 65536
+      scale_window: 2000
+  profiling:
+    enabled: false
+    wait: 1
+    warmup: 1
+    active: 3
+    repeat: 1
+  memory:
+    pin_memory: true
+    max_cache_size: 1000
+    clear_cache_interval: 100
+    optimize_memory_usage: true
+    empty_cache_threshold: 0.8
+
+data:
+  training_files: "filelists/train.txt"
+  validation_files: "filelists/val.txt"
+  test_files: "filelists/test.txt"
+  text_cleaners: ["english_cleaners"]
+  sampling_rate: 22050
+  filter_length: 1024
+  hop_length: 256
+  win_length: 1024
+  n_mel_channels: 80
+  mel_fmin: 0.0
+  mel_fmax: 8000.0
+  add_blank: true
+  normalize_audio: true
+  target_level: -27
+  clip_val: 1e-5
+  top_db: 80.0
+  use_augmentation: true
+  pitch_shift_range: [-300, 300]
+  time_stretch_range: [0.9, 1.1]
+  volume_range: [0.8, 1.2]
+  add_noise_prob: 0.5
+  noise_level: 0.005
+  augmentation:
+    enabled: true
+    pitch_shift:
+      enabled: true
+      range: [-300, 300]
+      probability: 0.5
+    time_stretch:
+      enabled: true
+      range: [0.9, 1.1]
+      probability: 0.5
+    volume:
+      enabled: true
+      range: [0.8, 1.2]
+      probability: 0.5
+    noise:
+      enabled: true
+      probability: 0.5
+      level: 0.005
+      types: ["gaussian", "pink"]
+    reverb:
+      enabled: true
+      probability: 0.3
+      room_scale: [0.1, 0.5]
+    eq:
+      enabled: true
+      probability: 0.3
+      bands: 5
+      gain_range: [-6, 6]
+  loading:
+    num_workers: 8
+    prefetch_factor: 2
+    persistent_workers: true
+    pin_memory: true
+    drop_last: true
+    shuffle_buffer_size: 10000
+    cache_size: 1000
+    cache_strategy: "lru"
+
+model:
+  n_vocab: 148
+  hidden_channels: 192
+  filter_channels: 768
+  filter_kernel_size: 3
+  n_heads: 4
+  n_layers: 6
+  kernel_size: 3
+  p_dropout: 0.1
+  resblock: "1"
+  resblock_kernel_sizes: [3,7,11]
+  resblock_dilation_sizes: [[1,3,5], [1,3,5], [1,3,5]]
+  upsample_rates: [8,8,2,2]
+  upsample_initial_channel: 512
+  upsample_kernel_sizes: [16,16,4,4]
+  n_layers_q: 3
+  architecture:
+    use_spectral_norm: true
+    use_weight_norm: true
+    use_scaled_dot_product: true
+    use_prenet: true
+    use_postnet: true
+    use_gst: true
+  attention:
+    heads: 4
+    window_size: 4
+    heads_share: false
+    rel_pos_emb: true
+    rel_pos_emb_dim: 32
+    max_rel_pos: 1024
+    attention_type: "scaled_dot"
+    key_size: 64
+    value_size: 64
+  prenet:
+    channels: 256
+    n_layers: 3
+    kernel_size: 5
+    dropout: 0.5
+  postnet:
+    channels: 512
+    n_layers: 5
+    kernel_size: 5
+    dropout: 0.1
+  gst:
+    enabled: true
+    ref_encoder_filters: [32, 32, 64, 64, 128, 128]
+    ref_encoder_kernel: 3
+    ref_encoder_stride: 2
+    ref_encoder_pad: 1
+    style_token_size: 256
+    num_style_tokens: 10
+  gin_channels: 256
+  segment_size: 8192
+
+synthesis:
+  sigma: 0.667
+  denoising_strength: 0.01
+  noise_schedule: "linear"
+  length_scale: 1.0
+  max_decoder_steps: 1000
+  gate_threshold: 0.5
+  use_griffin_lim: false
+  griffin_lim_iters: 32
+  power: 1.4
+  batch_size: 32
+  chunk_size: 44100
+  overlap: 0.1
+  crossfade: true
+  rtf_target: 0.2
+  use_caching: true
+  cache_size: 1000
+  low_latency_mode: false
+  realtime:
+    enabled: true
+    rtf_target: 0.2
+    use_caching: true
+    cache_size: 1000
+    low_latency_mode: false
+    buffer_size: 4096
+    max_latency: 50
+  post_processing:
+    normalize: true
+    target_level: -27
+    clip: true
+    clip_range: [-1, 1]
+    denoise: true
+    denoising_strength: 0.01
+  voice_conversion:
+    enabled: false
+    preserve_pitch: true
+    pitch_shift_range: [-300, 300]
+    formant_shift_range: [0.8, 1.2]
